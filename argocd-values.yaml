@@ -1,0 +1,60 @@
+global:
+  domain: argocd.example.com
+  logging:
+    format: json
+    level: info
+addPrometheusAnnotations: true
+controller:
+  metrics:
+    enabled: true
+  replicas: 1
+server:
+  ingress:
+    enabled: true
+  metrics:
+    enabled: true
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+repoServer:
+  metrics:
+    enabled: true
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+applicationSet:
+  replicas: 2
+dex:
+  livenessProbe:
+    enabled: true
+configs:
+  secret:
+    labels:
+      domain: example.com
+  params:
+    server.insecure: "true"
+  cm:
+    exec.enabled: "true"
+    admin.enabled: "true"
+    dex.config: |
+      logger:
+        level: debug
+      connectors:
+      - config:
+          issuer: https://auth.example.com/application/o/argocd/
+          clientID: $dex.authentik.clientID
+          clientSecret: $dex.authentik.clientSecret
+          insecureEnableGroups: true
+          scopes:
+            - openid
+            - profile
+            - email
+        name: authentik
+        type: oidc
+        id: authentik
+  rbac:
+    policy.csv: |
+      g, ArgoCD Admins, role:admin
+  repositories:
+    app-of-apps:
+      url: git@github.com:narigondelsiglo/argocd-app-of-apps.git

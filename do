@@ -82,8 +82,8 @@ input:
     imageRef: ghcr.io/siderolabs/installer:$talos_version_tag
   systemExtensions:
     - imageRef: ghcr.io/siderolabs/qemu-guest-agent:$talos_qemu_guest_agent_extension_tag
-    - imageRef: ghcr.io/siderolabs/drbd:$talos_drbd_extension_tag
-    - imageRef: ghcr.io/siderolabs/spin:$talos_spin_extension_tag
+    # - imageRef: ghcr.io/siderolabs/drbd:$talos_drbd_extension_tag
+    # - imageRef: ghcr.io/siderolabs/spin:$talos_spin_extension_tag
 output:
   kind: image
   imageOptions:
@@ -130,8 +130,10 @@ function apply {
   terraform output -raw talosconfig >talosconfig.yml
   terraform output -raw kubeconfig >kubeconfig.yml
   health
-  piraeus-install
-  export-kubernetes-ingress-ca-crt
+  local-path-storage-install
+  cluster-apps-install
+  # piraeus-install
+  # export-kubernetes-ingress-ca-crt
   info
 }
 
@@ -145,6 +147,39 @@ function health {
     --control-plane-nodes $controllers \
     --worker-nodes $workers
 }
+
+function local-path-storage-install {
+  step 'local-path-storage install'
+  kubectl apply --server-side -k local-path-storage
+}
+
+function local-path-storage-install {
+  helm install argocd argo/argo-cd --create-namespace -n argocd -f argocd-values.yaml
+  echo "Waiting for ArgoCD to install.."
+  start_time="$(date +%s)"
+  while ! kubectl get deployment argocd-server -n argocd &>/dev/null; do
+    if [[ $(($(date +%s) - $start_time)) -ge 300 ]]; then
+      echo "Error: ArgoCD is still missing after 5m of waiting."
+      exit 1
+    fi
+    sleep 5
+  done
+  kubectl wait deployment --selector=app.kubernetes.io/instance=argocd \
+      --for=condition=available --namespace=argocd --timeout 15m
+
+  kubectl apply -f files/argocd-repo-creds-k8s-apps-secret.yaml
+  kubectl create ns cert-manager
+  kubectl apply -f files/cloudflare-api-token.yaml
+
+  echo "Installing app-of-apps..."
+  # fix me
+  export DOMAIN=example.com
+  cat argocd-app-of-apps.yaml | envsubst | kubectl apply -f /dev/stdin
+
+  step 'local-path-storage install'
+  kubectl apply --server-side -k local-path-storage
+}
+
 
 function piraeus-install {
   # see https://github.com/piraeusdatastore/piraeus-operator
@@ -268,7 +303,7 @@ function info {
   done
   step 'kubernetes nodes'
   kubectl get nodes -o wide
-  piraeus-info
+  # piraeus-info
 }
 
 function export-kubernetes-ingress-ca-crt {

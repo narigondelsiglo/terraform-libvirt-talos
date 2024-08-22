@@ -27,20 +27,20 @@ locals {
           port    = 7445
         }
       }
-      kernel = {
-        modules = [
-          // piraeus dependencies.
-          {
-            name = "drbd"
-            parameters = [
-              "usermode_helper=disabled",
-            ]
-          },
-          {
-            name = "drbd_transport_tcp"
-          },
-        ]
-      }
+      # kernel = {
+      #   modules = [
+      #     // piraeus dependencies.
+      #     {
+      #       name = "drbd"
+      #       parameters = [
+      #         "usermode_helper=disabled",
+      #       ]
+      #     },
+      #     {
+      #       name = "drbd_transport_tcp"
+      #     },
+      #   ]
+      # }
     }
     cluster = {
       # see https://www.talos.dev/v1.7/talos-guides/discovery/
@@ -104,16 +104,16 @@ data "talos_machine_configuration" "controller" {
     yamlencode({
       cluster = {
         inlineManifests = [
-          {
-            name     = "spin"
-            contents = <<-EOF
-            apiVersion: node.k8s.io/v1
-            kind: RuntimeClass
-            metadata:
-              name: wasmtime-spin-v2
-            handler: spin
-            EOF
-          },
+          # {
+          #   name     = "spin"
+          #   contents = <<-EOF
+          #   apiVersion: node.k8s.io/v1
+          #   kind: RuntimeClass
+          #   metadata:
+          #     name: wasmtime-spin-v2
+          #   handler: spin
+          #   EOF
+          # },
           {
             name = "cilium"
             contents = join("---\n", [
@@ -121,56 +121,56 @@ data "talos_machine_configuration" "controller" {
               "# Source cilium.tf\n${local.cilium_external_lb_manifest}",
             ])
           },
-          {
-            name = "cert-manager"
-            contents = join("---\n", [
-              yamlencode({
-                apiVersion = "v1"
-                kind       = "Namespace"
-                metadata = {
-                  name = "cert-manager"
-                }
-              }),
-              data.helm_template.cert_manager.manifest,
-              "# Source cert-manager.tf\n${local.cert_manager_ingress_ca_manifest}",
-            ])
-          },
-          {
-            name     = "trust-manager"
-            contents = data.helm_template.trust_manager.manifest
-          },
-          {
-            name     = "reloader"
-            contents = data.helm_template.reloader.manifest
-          },
-          {
-            name = "gitea"
-            contents = join("---\n", [
-              yamlencode({
-                apiVersion = "v1"
-                kind       = "Namespace"
-                metadata = {
-                  name = local.gitea_namespace
-                }
-              }),
-              data.helm_template.gitea.manifest,
-              "# Source gitea.tf\n${local.gitea_manifest}",
-            ])
-          },
-          {
-            name = "argocd"
-            contents = join("---\n", [
-              yamlencode({
-                apiVersion = "v1"
-                kind       = "Namespace"
-                metadata = {
-                  name = local.argocd_namespace
-                }
-              }),
-              data.helm_template.argocd.manifest,
-              "# Source argocd.tf\n${local.argocd_manifest}",
-            ])
-          },
+          # {
+          #   name = "cert-manager"
+          #   contents = join("---\n", [
+          #     yamlencode({
+          #       apiVersion = "v1"
+          #       kind       = "Namespace"
+          #       metadata = {
+          #         name = "cert-manager"
+          #       }
+          #     }),
+          #     data.helm_template.cert_manager.manifest,
+          #     "# Source cert-manager.tf\n${local.cert_manager_ingress_ca_manifest}",
+          #   ])
+          # },
+          # {
+          #   name     = "trust-manager"
+          #   contents = data.helm_template.trust_manager.manifest
+          # },
+          # {
+          #   name     = "reloader"
+          #   contents = data.helm_template.reloader.manifest
+          # },
+          # {
+          #   name = "gitea"
+          #   contents = join("---\n", [
+          #     yamlencode({
+          #       apiVersion = "v1"
+          #       kind       = "Namespace"
+          #       metadata = {
+          #         name = local.gitea_namespace
+          #       }
+          #     }),
+          #     data.helm_template.gitea.manifest,
+          #     "# Source gitea.tf\n${local.gitea_manifest}",
+          #   ])
+          # },
+          # {
+          #   name = "argocd"
+          #   contents = join("---\n", [
+          #     yamlencode({
+          #       apiVersion = "v1"
+          #       kind       = "Namespace"
+          #       metadata = {
+          #         name = local.argocd_namespace
+          #       }
+          #     }),
+          #     data.helm_template.argocd.manifest,
+          #     "# Source argocd.tf\n${local.argocd_manifest}",
+          #   ])
+          # },
         ],
       },
     }),

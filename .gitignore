@@ -12,3 +12,8 @@ talosconfig.yml
 kubeconfig.yml
 kubernetes-ingress-ca-crt.pem
 tmp/
+
+# Secrets and generated files
+files/*
+!files/cloudflare-api-token-placeholder.yaml
+!files/argocd-repo-creds-k8s-apps-secret-placeholder.yaml

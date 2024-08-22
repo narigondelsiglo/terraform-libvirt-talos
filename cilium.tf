@@ -107,7 +107,7 @@ data "helm_template" "cilium" {
   }
   set {
     name  = "ingressController.default"
-    value = "true"
+    value = "false"
   }
   set {
     name  = "ingressController.loadbalancerMode"
