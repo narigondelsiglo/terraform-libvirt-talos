@@ -29,6 +29,9 @@ export TF_LOG_PATH='terraform.log'
 export TALOSCONFIG=$PWD/talosconfig.yml
 export KUBECONFIG=$PWD/kubeconfig.yml
 
+# FIX ME do something more elegant using the tf ingress_domain variable
+export DOMAIN=${DOMAIN:-example.com}
+
 function step {
   echo "### $* ###"
 }
@@ -153,9 +156,10 @@ function local-path-storage-install {
   kubectl apply --server-side -k local-path-storage
 }
 
-function local-path-storage-install {
-  helm install argocd argo/argo-cd --create-namespace -n argocd -f argocd-values.yaml
-  echo "Waiting for ArgoCD to install.."
+function cluster-apps-install {
+  step 'argo cd install'
+  sed "s/example.com/$DOMAIN/g" argocd-values.yaml > tmp/argocd-values.yaml
+  helm install argocd argo/argo-cd --create-namespace -n argocd -f tmp/argocd-values.yaml
   start_time="$(date +%s)"
   while ! kubectl get deployment argocd-server -n argocd &>/dev/null; do
     if [[ $(($(date +%s) - $start_time)) -ge 300 ]]; then
@@ -166,15 +170,13 @@ function local-path-storage-install {
   done
   kubectl wait deployment --selector=app.kubernetes.io/instance=argocd \
       --for=condition=available --namespace=argocd --timeout 15m
-
+  step 'secrets provisioning'
   kubectl apply -f files/argocd-repo-creds-k8s-apps-secret.yaml
   kubectl create ns cert-manager
   kubectl apply -f files/cloudflare-api-token.yaml
 
-  echo "Installing app-of-apps..."
-  # fix me
-  export DOMAIN=example.com
-  cat argocd-app-of-apps.yaml | envsubst | kubectl apply -f /dev/stdin
+  step 'cluster apps install'
+  sed "s/example.com/$DOMAIN/g" argocd-app-of-apps.yaml | kubectl apply -f /dev/stdin
 
   step 'local-path-storage install'
   kubectl apply --server-side -k local-path-storage
