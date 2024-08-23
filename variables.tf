@@ -25,7 +25,7 @@ variable "kubernetes_version" {
 variable "cluster_name" {
   description = "A name to provide for the Talos cluster"
   type        = string
-  default     = "example"
+  default     = "talos1"
 }
 
 variable "cluster_vip" {
@@ -79,7 +79,7 @@ variable "cluster_node_domain" {
 variable "ingress_domain" {
   description = "the DNS domain of the ingress resources"
   type        = string
-  default     = "example.test"
+  default     = "example.com"
 }
 
 variable "controller_count" {
@@ -111,5 +111,5 @@ variable "talos_libvirt_base_volume_name" {
 
 variable "prefix" {
   type    = string
-  default = "terraform_talos_example"
+  default = "talos"
 }

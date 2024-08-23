@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: git@github.com:narigondelsiglo/argocd-app-of-apps.git
-    targetRevision: secrets
+    targetRevision: main
     path: chart
     helm:
       releaseName: app-of-apps
